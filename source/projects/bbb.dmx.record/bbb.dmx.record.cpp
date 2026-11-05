@@ -297,7 +297,8 @@ private:
     }
 
     void write_frames(const std::string &path) {
-        std::ofstream output_file(path);
+        const std::string resolved_path{bbb::dmx::maxutil::resolve_file_path(path)};
+        std::ofstream output_file(resolved_path);
         if(!output_file.good()) {
             report_error("failed to open record file for writing");
             return;
@@ -316,7 +317,8 @@ private:
     }
 
     void read_frames(const std::string &path) {
-        std::ifstream input_file(path);
+        const std::string resolved_path{bbb::dmx::maxutil::resolve_file_path(path)};
+        std::ifstream input_file(resolved_path);
         if(!input_file.good()) {
             report_error("failed to open record file for reading");
             return;
@@ -337,7 +339,11 @@ private:
             std::string universe_token;
             int universe_id{1};
             stream >> frame_index >> universe_token >> universe_id;
-            if(frame_index < 0 || universe_token != "universe") {
+            // Guard against a corrupt frame index triggering a huge up-front
+            // allocation (loaded_frames.resize below). 1,000,000 frames is
+            // ~9 hours at 30fps - far beyond any real recording.
+            constexpr int max_frame_index{1000000};
+            if(frame_index < 0 || frame_index > max_frame_index || universe_token != "universe") {
                 report_error("invalid record line");
                 return;
             }
