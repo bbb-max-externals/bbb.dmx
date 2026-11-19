@@ -11,10 +11,27 @@
 #include <vector>
 
 #include "bbb/dmx/frame_set.hpp"
+#include "bbb/dmx/channel_batch.hpp"
 #include "bbb/dmx/math.hpp"
 #include "bbb/dmx/setup.hpp"
 
 namespace bbb::dmx::maxutil {
+
+inline double channel_number(const c74::min::atom& atom) {
+    if(atom.a_type == c74::max::A_LONG || atom.a_type == c74::max::A_FLOAT) return (double)atom;
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
+inline bool channel_universe_atom(const c74::min::atom& atom) {
+    const auto number = std::trunc(channel_number(atom));
+    return std::numeric_limits<int>::min() <= number && number <= std::numeric_limits<int>::max();
+}
+
+inline const char* channel_batch_error(const c74::min::atoms& atoms, std::size_t start, bool triples = false) {
+    if(atoms.size() < start) return "incomplete channel batch";
+    return bbb::dmx::channel_batch_error(atoms.size() - start, triples,
+        [&](std::size_t i) { return channel_number(atoms[start + i]); });
+}
 
 inline bool finite_atom(const c74::min::atom &atom) {
     return bbb::dmx::is_finite((double)atom);
@@ -127,17 +144,14 @@ inline frame_write_result write_channel_message(
 inline frame_write_result write_channels_message(
     bbb::dmx::dmx_frame_set &frames,
     const c74::min::atoms &atoms,
-    const std::string &error_message,
-    const std::string &pair_error_message
+    const std::string &error_message
 ) {
-    if(atoms.size() < 3 || ((atoms.size() - 1) % 2) != 0 || !finite_atom(atoms[0])) {
+    if(atoms.size() < 3 || ((atoms.size() - 1) % 2) != 0 || !channel_universe_atom(atoms[0])) {
         return frame_write_result::failure(error_message);
     }
+    if(const char* error = channel_batch_error(atoms, 1)) return frame_write_result::failure(error);
     const int sanitized_universe{sanitize_universe_id((int)atoms[0])};
     for(std::size_t index = 1; index < atoms.size(); index += 2) {
-        if(!finite_atoms(atoms, index, 2)) {
-            return frame_write_result::failure(pair_error_message);
-        }
         const bbb::dmx::write_result result{frames.set_channel(sanitized_universe, (int)atoms[index], (int)atoms[index + 1])};
         if(!result.ok) {
             return frame_write_result::failure(result.message);

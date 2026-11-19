@@ -87,17 +87,17 @@ public:
 
     c74::min::message<> channels_message{this, "channels", "channels universe address value ...",
         MIN_FUNCTION {
-            if(args.size() < 3 || ((args.size() - 1) % 2) != 0 || !bbb::dmx::maxutil::finite_atom(args[0])) {
+            if(args.size() < 3 || ((args.size() - 1) % 2) != 0 || !bbb::dmx::maxutil::channel_universe_atom(args[0])) {
                 report_error("channels requires universe and address/value pairs");
+                return {};
+            }
+            if(const char* error = bbb::dmx::maxutil::channel_batch_error(args, 1)) {
+                report_error(error);
                 return {};
             }
             const int universe_id{bbb::dmx::sanitize_universe_id((int)args[0])};
             const bbb::dmx::dmx_universe before{frames_.universe(universe_id)};
             for(std::size_t index = 1; index < args.size(); index += 2) {
-                if(!bbb::dmx::maxutil::finite_atoms(args, index, 2)) {
-                    report_error("channels pair must be numeric");
-                    return {};
-                }
                 const bbb::dmx::write_result result{frames_.set_channel(universe_id, (int)args[index], (int)args[index + 1])};
                 if(!result.ok) {
                     report_error(result.message);

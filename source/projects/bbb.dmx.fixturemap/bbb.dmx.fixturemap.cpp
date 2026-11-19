@@ -1131,12 +1131,12 @@ public:
                 report_error("channels requires address/value pairs");
                 return {};
             }
+            if(const char* error = bbb::dmx::maxutil::channel_batch_error(args, 0)) {
+                report_error(error);
+                return {};
+            }
             const bbb::dmx::fixture_mapper::universe_map previous_universes{mapper_.universe_snapshot()};
             for(std::size_t index = 0; index < args.size(); index += 2) {
-                if(!finite_atom(args[index]) || !finite_atom(args[index + 1])) {
-                    report_error("channels pair must be numeric");
-                    return {};
-                }
                 const bbb::dmx::mapper_result result{mapper_.set_channel(universe_value_, (int)args[index], (int)args[index + 1])};
                 if(!handle_result(result)) {
                     return {};
@@ -1154,12 +1154,12 @@ public:
                 report_error("uchannels requires universe/address/value triples");
                 return {};
             }
+            if(const char* error = bbb::dmx::maxutil::channel_batch_error(args, 0, true)) {
+                report_error(error);
+                return {};
+            }
             const bbb::dmx::fixture_mapper::universe_map previous_universes{mapper_.universe_snapshot()};
             for(std::size_t index = 0; index < args.size(); index += 3) {
-                if(!finite_atom(args[index]) || !finite_atom(args[index + 1]) || !finite_atom(args[index + 2])) {
-                    report_error("uchannels triple must be numeric");
-                    return {};
-                }
                 const int universe_id{std::max(1, (int)args[index])};
                 const bbb::dmx::mapper_result result{mapper_.set_channel(universe_id, (int)args[index + 1], (int)args[index + 2])};
                 if(!handle_result(result)) {
