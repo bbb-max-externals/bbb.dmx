@@ -118,17 +118,17 @@ public:
 
     c74::min::message<> channels_message{this, "channels", "channels universe time_ms address value ...",
         MIN_FUNCTION {
-            if(args.size() < 4 || ((args.size() - 2) % 2) != 0 || !bbb::dmx::maxutil::finite_atoms(args, 0, 2)) {
+            if(args.size() < 4 || ((args.size() - 2) % 2) != 0 || !bbb::dmx::maxutil::channel_universe_atom(args[0]) || !std::isfinite(bbb::dmx::maxutil::channel_number(args[1]))) {
                 report_error("channels requires universe time_ms and address/value pairs");
+                return {};
+            }
+            if(const char* error = bbb::dmx::maxutil::channel_batch_error(args, 2)) {
+                report_error(error);
                 return {};
             }
             const int universe_id{(int)args[0]};
             const double duration{std::max(0.0, (double)args[1])};
             for(std::size_t index = 2; index < args.size(); index += 2) {
-                if(!bbb::dmx::maxutil::finite_atoms(args, index, 2)) {
-                    report_error("channels pair must be numeric");
-                    return {};
-                }
                 set_channel_target_no_output(universe_id, (int)args[index], (int)args[index + 1], duration);
             }
             output_universe(bbb::dmx::sanitize_universe_id(universe_id));

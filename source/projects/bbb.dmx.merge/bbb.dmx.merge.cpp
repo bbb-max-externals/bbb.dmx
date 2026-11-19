@@ -228,17 +228,17 @@ public:
 
     c74::min::message<> channels_message{this, "channels", "channels layer_name universe address value ...",
         MIN_FUNCTION {
-            if(args.size() < 4 || ((args.size() - 2) % 2) != 0 || !bbb::dmx::maxutil::finite_atom(args[1])) {
+            if(args.size() < 4 || ((args.size() - 2) % 2) != 0 || !bbb::dmx::maxutil::channel_universe_atom(args[1])) {
                 report_error("channels requires layer name universe and address/value pairs");
+                return {};
+            }
+            if(const char* error = bbb::dmx::maxutil::channel_batch_error(args, 2)) {
+                report_error(error);
                 return {};
             }
             const std::string layer_name{bbb::dmx::maxutil::symbol_arg(args[0])};
             const int universe_id{bbb::dmx::sanitize_universe_id((int)args[1])};
             for(std::size_t index = 2; index < args.size(); index += 2) {
-                if(!bbb::dmx::maxutil::finite_atoms(args, index, 2)) {
-                    report_error("channels pair must be numeric");
-                    return {};
-                }
                 if(!set_layer_channel_no_output(layer_name, universe_id, (int)args[index], (int)args[index + 1])) {
                     return {};
                 }

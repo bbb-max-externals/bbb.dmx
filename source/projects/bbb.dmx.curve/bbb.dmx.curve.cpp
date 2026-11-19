@@ -151,8 +151,7 @@ public:
             handle_frame_write(bbb::dmx::maxutil::write_channels_message(
                 input_frames_,
                 args,
-                "channels requires universe and address/value pairs",
-                "channels pair must be numeric"
+                "channels requires universe and address/value pairs"
             ));
             return {};
         }

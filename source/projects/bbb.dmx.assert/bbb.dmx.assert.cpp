@@ -155,7 +155,7 @@ public:
 
     c74::min::message<> channels_message{this, "channels", "channels universe address value ...",
         MIN_FUNCTION {
-            handle_frame_write(bbb::dmx::maxutil::write_channels_message(frames_, args, "channels requires universe and address/value pairs", "channels pair must be numeric"));
+            handle_frame_write(bbb::dmx::maxutil::write_channels_message(frames_, args, "channels requires universe and address/value pairs"));
             return {};
         }
     };

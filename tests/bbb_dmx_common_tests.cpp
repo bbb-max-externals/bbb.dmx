@@ -1,3 +1,4 @@
+#include <bbb/dmx/channel_batch.hpp>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -190,6 +191,16 @@ bbb::dmx::fixture_mode make_sgm_q8_simplified_mode() {
 } // namespace
 
 int main() {
+    auto batch_error = [](std::initializer_list<double> input, bool triples = false) {
+        return bbb::dmx::channel_batch_error(input.size(), triples,
+            [&](std::size_t i) { return input.begin()[i]; });
+    };
+    require(!batch_error({1, 0, 512, 255}), "all channel pairs accept inclusive address limits");
+    require(batch_error({1, 5, 513, 10}), "reject a late invalid address before applying the batch");
+    require(batch_error({1, 5, 2, std::numeric_limits<double>::quiet_NaN()}),
+        "reject a late nonnumeric value");
+    require(!batch_error({1, 512, 255, 2, 1, 0}, true), "accept repeated universe/address/value triples");
+    require(batch_error({1, 512, 255, 2, 0, 0}, true), "validate each triple address");
     require(bbb::dmx::angle_to_u16(-270.0, 540.0) == 0, "pan range minimum maps to 0");
     require(bbb::dmx::angle_to_u16(270.0, 540.0) == 65535, "pan range maximum maps to 65535");
     require(bbb::dmx::angle_to_u16(0.0, 540.0) == 32768, "center uses round() and maps to 32768");
